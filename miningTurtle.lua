@@ -210,10 +210,10 @@ function goToOrigin(x,y,z,dir)
         end
     end
 
-    dir,success = turnToDir(dir,NORTH)
-    if not success then
-        return x,y,z,dir,false
-    end
+    -- dir,success = turnToDir(dir,NORTH)
+    -- if not success then
+    --     return x,y,z,dir,false
+    -- end
 
     return x,y,z,dir,true
 end
