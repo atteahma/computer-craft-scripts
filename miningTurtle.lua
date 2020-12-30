@@ -279,12 +279,13 @@ function doRefuel()
     turtle.select(FUEL_SLOT)
     fuelData = turtle.getItemDetail()
     if fuelData == nil then
-        -- slot is empty
+        -- slot is empty,
+        -- should never happen
         return 0,false
     end
 
     fuelName = fuelData.name
-    fuelCount = fuelData.count
+    fuelCount = fuelData.count - 1 -- always leave one item in
     fuelValuePerItem = FUEL_VALUES[fuelName]
     if fuelValuePerItem == nil then
         -- fuel type not recognized
@@ -311,12 +312,13 @@ function needsFuelItems(x,y,z)
     fuelData = turtle.getItemDetail()
 
     if fuelData == nil then
-        -- fuel slot is empty
+        -- fuel slot is empty,
+        -- should never happen
         moveDistFromInv = 0
 
     else
         fuelName = fuelData.name
-        fuelCount = fuelData.count
+        fuelCount = fuelData.count - 1 -- always leave one item in
         fuelValuePerItem = FUEL_VALUES[fuelData.name]
         if fuelValuePerItem == nil then
             -- fuel type not recognized
@@ -363,14 +365,19 @@ function doRefuelFromChest(x,y,z,dir,dumpItems)
         turtle.select(FUEL_SLOT)
         numFuelItemsToGet = turtle.getItemSpace()
 
-        if not turtle.suck(numFuelItemsToGet) then
-            return x,y,z,dir,false
-        end
+        gotItems = turtle.suck(numFuelItemsToGet)
 
-        -- max out internal fuel
-        numFuelItemsConsumed,success = doRefuel()
-        if not success then
-            return x,y,z,dir,false
+        if gotItems then
+            -- max out internal fuel
+            numFuelItemsConsumed,success = doRefuel()
+            if not success then
+                return x,y,z,dir,false
+            end
+        else
+            -- no more items in fuel chest,
+            -- just continue with what you have
+            -- not great, improve later
+            numFuelItemsConsumed = 0
         end
     end
     
@@ -710,11 +717,14 @@ end
 
 io.write('[INP] Number of blocks to go left: ')
 xSize = io.read()
+io.write('\n')
 
 io.write('[INP] Number of blocks to go forward: ')
 ySize = io.read()
+io.write('\n')
 
 io.write('[INP] Number of blocks to go down: ')
 zSize = io.read()
+io.write('\n')
 
 main(xSize,ySize,zSize)
