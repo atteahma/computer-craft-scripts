@@ -26,12 +26,15 @@ FUEL_VALUES = {
 -- note: y >= 0 , x >= 0 , z <= 0
 -- should ALWAYS hold
 
+function mod(x,b)
+    return math.fmod((math.fmod(x,b) + b),b)
+end
 
 function turnLeft(dir)
     success = false
 
     if turtle.turnLeft() then
-        dir = math.fmod(dir - 1,4)
+        dir = mod(dir - 1,4)
         success = true
     end
 
@@ -42,7 +45,7 @@ function turnRight(dir)
     success = false
 
     if turtle.turnRight() then
-        dir = math.fmod(dir + 1,4)
+        dir = mod(dir + 1,4)
         success = true
     end
 
@@ -331,13 +334,13 @@ function needsFuelItems(x,y,z)
     currFuel = turtle.getFuelLevel()
     range = currFuel + moveDistFromInv
     distToOrigin = x + y + z
-    buffer = MIN_FUEL_ALLOWED + 3 -- safety buffer
+    buffer = MIN_FUEL_ALLOWED + 5 -- safety buffer
 
-    if distToOrigin > (range + buffer) then
-        return false
+    if (range - buffer) < distToOrigin then
+        return true
     end
 
-    return true
+    return false
 end
 
 -- dumpItems=True means:
@@ -545,7 +548,7 @@ function main(xSize,ySize,zSize)
     dir = NORTH
     
     -- fill internal inventory fuelItem slot and refuel to max fuel
-    x,y,z,dir,success = doRefuelFromChest(x,y,z,dir)
+    x,y,z,dir,success = doRefuelFromChest(x,y,z,dir,false)
     if not success then
         run = false
         print('[INIT] failed to fill internal inventory with fuel.')
@@ -558,7 +561,7 @@ function main(xSize,ySize,zSize)
     
     -- BUILD/DIG LOGIC
     numZLayers = math.ceil(zSize / 3) -- includes final Z-Layer
-    finalZLayerHeight = math.fmod(zSize,3)
+    finalZLayerHeight = mod(zSize,3)
     if finalZLayerHeight == 0 then
         finalZLayerHeight = 3
     end
@@ -567,21 +570,21 @@ function main(xSize,ySize,zSize)
         print('[RUN] starting Z-Layer=' .. zLayer_i)
 
         -- determine differences between normal/reversed Z-Layer
-        if math.fmod(zLayer_i,2) == 0 then
+        if mod(zLayer_i,2) == 1 then
             -- normal Z-Layer
             startX = 1
-            endX = xSize
+            endX = xSize-1
             dirX = 1
             startY = 1
-            endY = ySize
+            endY = ySize-1
             dirY = 1
             startDir = NORTH
         else
             -- reversed Z-Layer
-            startX = xSize
+            startX = xSize-1
             endX = 1
             dirX = -1
-            startY = ySize
+            startY = ySize-1
             endY = 1
             dirY = -1
             startDir = SOUTH
@@ -601,14 +604,43 @@ function main(xSize,ySize,zSize)
         elseif zLayerHeight == 2 then
             doMineBelow = true
             doMineAbove = false
+
+            -- remove block below
+            z,success = mineDown(z)
+            if not success then
+                print('[ERR] failed to clear block below initial location')
+                return
+            end
+
+            -- go back to middle
+            z,success = mineUp(z)
+            if not success then
+                print('[ERR] failed to get back to top of Z-Layer')
+                return
+            end
+
         elseif zLayerHeight == 3 then
             doMineBelow = true
             doMineAbove = true
 
-            -- start in the middle Z coordinate
+            -- start in the middle Z coordinate, clear one below
             z,success = mineDown(z)
             if not success then
-                print('[ERR] failed to get to midde of Z-Layer')
+                print('[ERR] failed to get to midde of Z-Layer [A]')
+                return
+            end
+
+            -- remove block below
+            z,success = mineDown(z)
+            if not success then
+                print('[ERR] failed to get to midde of Z-Layer [B]')
+                return
+            end
+
+            -- go back to middle
+            z,success = mineUp(z)
+            if not success then
+                print('[ERR] failed to get to midde of Z-Layer [C]')
                 return
             end
         end
@@ -642,7 +674,7 @@ function main(xSize,ySize,zSize)
             end
 
             -- round the corner
-            if math.fmod(x_i,2) == 0 then
+            if mod(x_i,2) == 1 then
                 cornerFunc = turnLeft
             else
                 cornerFunc = turnRight
