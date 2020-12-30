@@ -11,8 +11,8 @@ FUEL_CHEST_DIR = SOUTH
 ITEM_CHEST_DIR = EAST
 
 FUEL_VALUES = {
-    'minecraft:coal'=80,
-    'minecraft:charcoal'=80,
+    ['minecraft:coal']=80,
+    ['minecraft:charcoal']=80
 } -- only supports coal and charcoal currently
 
 -- COORDINATE SPACE:
@@ -84,16 +84,16 @@ end
 --     mines current level AND level directly below
 -- blockAbove=True means:
 --     mines current level AND level directly above
-function mineForward(x,y,blockBelow,blockAbove)
+function mineForward(x,y,dir,blockBelow,blockAbove)
 
     while turtle.detect() do -- while loop for gravity blocks
         if not turtle.dig() then
-            return x,y,false
+            return x,y,dir,false
         end
     end
     
-    if not turtle.forward() do
-        return x,y,false
+    if not turtle.forward() then
+        return x,y,dir,false
     end
 
     if dir == NORTH then
@@ -109,7 +109,7 @@ function mineForward(x,y,blockBelow,blockAbove)
     if blockBelow then
         while turtle.detectDown() do
             if not turtle.digDown() then
-                return x,y,false
+                return x,y,dir,false
             end
         end
     end
@@ -117,12 +117,12 @@ function mineForward(x,y,blockBelow,blockAbove)
     if blockAbove then
         while turtle.detectUp() do
             if not turtle.digUp() then
-                return x,y,false
+                return x,y,dir,false
             end
         end
     end
 
-    return x,y,true
+    return x,y,dir,true
 end
 
 -- mines block above AND moves up
@@ -134,7 +134,7 @@ function mineUp(z)
         end
     end
     
-    if not turtle.up() do
+    if not turtle.up() then
         return z,false
     end
 
@@ -152,7 +152,7 @@ function mineDown(z)
         end
     end
     
-    if not turtle.down() do
+    if not turtle.down() then
         return z,false
     end
 
@@ -181,10 +181,10 @@ function goToOrigin(x,y,z,dir)
     end
     
     while x > 0 do
-        x,y,success = mineForward(
+        x,y,dir,success = mineForward(
             x,y,dir,
-            blockBelow=false,
-            blockAbove=false,
+            false,
+            false
         )
         if not success then
             return x,y,z,dir,false
@@ -197,10 +197,10 @@ function goToOrigin(x,y,z,dir)
     end
 
     while y > 0 do
-        x,y,success = mineForward(
+        x,y,dir,success = mineForward(
             x,y,dir,
-            blockBelow=false,
-            blockAbove=false,
+            false,
+            false
         )
         if not success then
             return x,y,z,dir,false
@@ -224,10 +224,10 @@ function goToPosFromOrigin(x,y,z,dir,gX,gY,gZ,gDir)
     end
     
     while y < gY do
-        x,y,success = mineForward(
+        x,y,dir,success = mineForward(
             x,y,dir,
-            blockBelow=false,
-            blockAbove=false,
+            false,
+            false
         )
         if not success then
             return x,y,z,dir,false
@@ -240,10 +240,10 @@ function goToPosFromOrigin(x,y,z,dir,gX,gY,gZ,gDir)
     end
 
     while x < gX do
-        x,y,success = mineForward(
+        x,y,dir,success = mineForward(
             x,y,dir,
-            blockBelow=false,
-            blockAbove=false,
+            false,
+            false
         )
         if not success then
             return x,y,z,dir,false
@@ -384,7 +384,7 @@ function doRefuelFromChest(x,y,z,dir,dumpItems)
     if dumpItems then
         x,y,z,dir,success = dumpItemsInChest(
             x,y,z,dir,
-            getFuel=False,
+            False
         )
         if not success then
             return x,y,z,dir,false
@@ -393,7 +393,7 @@ function doRefuelFromChest(x,y,z,dir,dumpItems)
     
     x,y,z,dir,success = goToPosFromOrigin(
             x,    y,    z,    dir,
-        prevX,prevY,prevZ,prevDir,
+        prevX,prevY,prevZ,prevDir
     )
     if not success then
         return x,y,z,dir,false
@@ -472,7 +472,7 @@ function dumpItemsInChest(x,y,z,dir,getFuel)
     if getFuel then
         x,y,z,dir,success = doRefuelFromChest(
             x,y,z,dir,
-            dumpItems=False,
+            False
         )
         if not success then
             return x,y,z,dir,false
@@ -481,7 +481,7 @@ function dumpItemsInChest(x,y,z,dir,getFuel)
 
     x,y,z,dir,success = goToPosFromOrigin(
             x,    y,    z,    dir,
-        prevX,prevY,prevZ,prevDir,
+        prevX,prevY,prevZ,prevDir
     )
     if not success then
         return x,y,z,dir,false
@@ -508,7 +508,7 @@ function doSelfCare(x,y,z,dir)
         
         x,y,z,dir,success = doRefuelFromChest(
             x,y,z,dir,
-            dumpItems=True,
+            True
         )
         if not success then
             print('[ERR] failed to refuel from origin.')
@@ -523,7 +523,7 @@ function doSelfCare(x,y,z,dir)
         
         x,y,z,dir,success = dumpItemsInChest(
             x,y,z,dir,
-            fetchFuel=True,
+            True
         )
         if not success then
             print('[ERR] failed to dump items at origin.')
@@ -625,8 +625,8 @@ function main(xSize,ySize,zSize)
                 -- go straight
                 x,y,dir,success = mineForward(
                     x,y,dir,
-                    blockBelow=doMineBelow,
-                    blockAbove=doMineAbove,
+                    doMineBelow,
+                    doMineAbove
                 )
                 if not success then
                     print('[ERR] failed to mine forward')
@@ -658,8 +658,8 @@ function main(xSize,ySize,zSize)
 
                 x,y,dir,success = mineForward(
                     x,y,dir,
-                    blockBelow=doMineBelow,
-                    blockAbove=doMineAbove,
+                    doMineBelow,
+                    doMineAbove
                 )
                 if not success then
                     print('[ERR] failed rounding the corner [B]')
@@ -697,7 +697,7 @@ function main(xSize,ySize,zSize)
 
     x,y,z,dir,success = dumpItemsInChest(
         x,y,z,dir,
-        getFuel=false,
+        false
     )
     if not success then
         print('[ERR] failed to dump items after finishing.')
