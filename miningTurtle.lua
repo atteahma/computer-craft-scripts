@@ -410,7 +410,7 @@ function invFull()
     for slot = 1,16 do
         if slot ~= FUEL_SLOT then
 
-            turtle.select(FUEL_SLOT)
+            turtle.select(slot)
             itemData = turtle.getItemDetail()
 
             if itemData == nil then
@@ -494,6 +494,7 @@ function dumpItemsInChest(x,y,z,dir,getFuel)
 end
 
 function doSelfCare(x,y,z,dir)
+    turtle.select(2)
     if needsRefuel() then
         print('[RUN] refueling...')
         
@@ -535,7 +536,7 @@ function doSelfCare(x,y,z,dir)
 
         print('[RUN] dumped items at origin and returned to original location.') 
     end
-
+    turtle.select(2)
     return x,y,z,dir,true
 end
 
@@ -748,15 +749,15 @@ function main(xSize,ySize,zSize)
 end
 
 io.write('[INP] Number of blocks to go left: ')
-xSize = io.read()
+xSize = tonumber(io.read())
 io.write('\n')
 
 io.write('[INP] Number of blocks to go forward: ')
-ySize = io.read()
+ySize = tonumber(io.read())
 io.write('\n')
 
 io.write('[INP] Number of blocks to go down: ')
-zSize = io.read()
+zSize = tonumber(io.read())
 io.write('\n')
 
 main(xSize,ySize,zSize)
